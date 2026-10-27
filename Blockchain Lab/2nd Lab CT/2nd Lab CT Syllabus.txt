@@ -1,0 +1,13 @@
+
+Questions:
+
+01: Program to Create a Bitcoin Transaction and Sign It with a SIGHASH Flag 
+Using the bitcoinlib Library. 
+
+02: Program for Bitcoin Mining. 
+
+03: Program that Demonstrates How to Identify 51% Attacks on a 
+Blockchain. 
+
+
+In exam sir give 02 or 03 to solved. I solved 02.
