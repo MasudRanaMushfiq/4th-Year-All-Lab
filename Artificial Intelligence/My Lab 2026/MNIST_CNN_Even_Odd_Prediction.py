@@ -8,10 +8,13 @@ from sklearn.model_selection import train_test_split
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-X_train = x_train.reshape(-1, 28, 28, 1) / 255.0
-X_test = x_test.reshape(-1, 28, 28, 1) / 255.0
+x_train = x_train.astype("float32")/255.0
+x_test = x_test.astype("float32")/255.0
 
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size = 0.10, random_state = 42, shuffle = True)
+x_train = x_train.reshape(-1, 28, 28, 1)
+x_test = x_test.reshape(-1, 28, 28, 1)
+
+X_train, X_val, y_train, y_val = train_test_split(x_train, y_train, test_size = 0.10, random_state = 42, shuffle = True)
 print(len(X_val))
 
 model = Sequential([
@@ -39,7 +42,7 @@ history = model.fit(
     batch_size=64,
     validation_data = (X_val, y_val),
     verbose=1
-)
+) 
 
 print(history.history.keys())
 
