@@ -126,3 +126,6 @@ void I2C1_Read(int n, char *str)
     /*Disable acknowledge for slave*/
     I2C1_CR1 &= ~(1 << 10);
 }
+
+
+

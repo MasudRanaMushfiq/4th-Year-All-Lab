@@ -30,22 +30,19 @@
 #define TIM2_CR1 (*(volatile unsigned int *)(TIM2_BASE + 0x00))
 #define TIM2_SR (*(volatile unsigned int *)(TIM2_BASE + 0x10))
 
-// List of Function Declarations
-void I2C1_Init(void);
+void I2C1_Init();
 void I2C1_Send(char saddr, int n, char *str);
-void Delay(unsigned int ms);
 
 int main(void)
 {
     I2C1_Init();
     while (1)
     {
-        I2C1_Send(0x12, 5, "Noman");
-        Delay(50);
+        I2C1_Send(0x12, 6, "Shakil");
     }
 }
 
-void I2C1_Init(void)
+void I2C1_Init()
 {
 
     /*Enable clock of GPIOB through AHB1ENR*/
@@ -85,9 +82,15 @@ void I2C1_Init(void)
     I2C1_CR2 |= (1 << 4);
 
     /*Set I2C in standard mode, 100 KHz*/
+    //	       CCR = f_PCLK1 / (2 * f_SCL)
+    //	    	   = 16,000,000 / (2 * 100,000)
+    //	    	   = 80
     I2C1_CCR = 80;
 
     /*Set rise time*/
+    // 		   TRISE = (t_r * f_PCLK1) + 1
+    // 		   		 = (1x10^-6 * 16x10^6) + 1
+    // 		   		 = 17
     I2C1_TRISE = 17;
 
     /*Now finally enable the I2C1*/
@@ -96,7 +99,6 @@ void I2C1_Init(void)
 
 void I2C1_Send(char saddr, int n, char *str)
 {
-
     /*Wait when bus is busy*/
     while (I2C1_SR2 & (1 << 1))
     {
@@ -108,18 +110,10 @@ void I2C1_Send(char saddr, int n, char *str)
     {
     }
 
-    /*Send slave address + write (0) bit and wait for 500 milliseconds*/
+    /*Send slave address + write (0) bit and wait for ACK*/
     I2C1_DR = (saddr << 1);
-    unsigned int timeout = 500;
     while (!(I2C1_SR1 & (1 << 1)))
     {
-        if (--timeout == 0)
-        {
-            /*Generate stop*/
-            I2C1_CR1 |= (1 << 9);
-            return;
-        }
-        Delay(1);
     }
 
     /*Clear ADDR flag*/
@@ -146,29 +140,4 @@ void I2C1_Send(char saddr, int n, char *str)
     I2C1_CR1 |= (1 << 9);
 }
 
-void Delay(unsigned int ms)
-{
 
-    // Enable TIM2 clock (APB1 peripheral bus)
-    RCC_APB1ENR |= (1 << 0);
-
-    // Set prescaler to 16000-1 (so timer counts in 1 ms steps)
-    TIM2_PSC = 16000 - 1;
-
-    // Set auto-reload value
-    TIM2_ARR = ms;
-
-    // Reset update flag (UIF)
-    TIM2_SR &= ~(1 << 0);
-
-    // Enable timer
-    TIM2_CR1 |= (1 << 0);
-
-    // Wait for update flag (UIF) to be set
-    while (!(TIM2_SR & (1 << 0)))
-    {
-    }
-
-    // Disable timer
-    TIM2_CR1 &= ~(1 << 0);
-}
