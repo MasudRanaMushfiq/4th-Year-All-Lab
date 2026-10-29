@@ -46,10 +46,10 @@
 #define I2C1_CCR      (*(volatile unsigned int *)0x4000541C) // I2C 1 Clock Control Register. (Configures I2C clock timing)
 #define I2C1_TRISE    (*(volatile unsigned int *)0x40005420) // I2C 1 TRise Time Register.(Configures the I2C max rise-time limit)
 
-void SystemInit(void) __attribute__((weak));
-void SystemInit(void) { }
-void __libc_init_array(void) __attribute__((weak)); 
-void __libc_init_array(void) { }
+// void SystemInit(void) __attribute__((weak));
+// void SystemInit(void) { }
+// void __libc_init_array(void) __attribute__((weak)); 
+// void __libc_init_array(void) { }
 
 static void delay_ms(unsigned int ms) {                   // A delay function
     for (unsigned int m = 0; m < ms; m++)
@@ -73,40 +73,70 @@ static void little_blink(void) {                   // This is similar to blink()
 }
 
 /* Write one byte to the slave. 1 = ACKed, 0 = no slave / error. */
-static int i2c_write(unsigned char addr, unsigned char data) {
-    unsigned int g;
-    g = GUARD; while ((I2C1_SR2 & (1 << 1)) && --g); if (!g) return 0; // If the bus remains busy until the counter expires, the function returns 0.
-    I2C1_CR1 |= (1 << 8); // he peripheral generates a START condition on the bus when it is able to do so.
-    g = GUARD; while (!(I2C1_SR1 & (1 << 0)) && --g); if (!g) { I2C1_CR1 |= (1<<9); return 0; }
-    I2C1_DR = (addr << 1) | 0;
-    g = GUARD; while (!(I2C1_SR1 & ((1<<1)|(1<<10))) && --g);
-    if (I2C1_SR1 & (1 << 10)) { I2C1_SR1 &= ~(1<<10); I2C1_CR1 |= (1<<9); return 0; }
-    if (!(I2C1_SR1 & (1 << 1))) { I2C1_CR1 |= (1<<9); return 0; }
-    (void)I2C1_SR1; (void)I2C1_SR2;
-    g = GUARD; while (!(I2C1_SR1 & (1 << 7)) && --g);
-    I2C1_DR = data;
-    g = GUARD; while (!(I2C1_SR1 & (1 << 2)) && --g);
-    I2C1_CR1 |= (1 << 9);
-    return 1;
+static int i2c_write(unsigned char addr, unsigned char data) { // this function can be called only from within this C source file
+    unsigned int g; // Creates an unsigned integer variable named g
+    g = GUARD; 
+    // The semicolon means the loop has an empty body.
+    while ((I2C1_SR2 & (1 << 1)) && --g);  // This checks whether the I2C bus is busy. I2C1_SR2 reads the second I2C status register. 
+    if (!g) return 0; // If the bus remains busy until the counter expires, the function returns 0.
+    I2C1_CR1 |= (1 << 8); // The peripheral generates a START condition on the bus when it is able to do so. Bit 8 is the START bit.
+    g = GUARD; 
+    while (!(I2C1_SR1 & (1 << 0)) && --g); // This checks the SB flag, which is bit 0 of I2C1_SR1. Wait for the START condition to be detected 
+    if (!g) { I2C1_CR1 |= (1<<9); return 0; } // Set bit 9 (STOP) in I2C1_CR1. The STOP request attempts to end the transaction.
+    I2C1_DR = (addr << 1) | 0;               // Shift a bit left to add R/W bit and then make write as set 0
+    g = GUARD; 
+
+    // Bit 1: ADDR, indicating that the address phase has completed.
+    // Bit 10: AF, indicating acknowledge failure.
+    // This selects both bits, so the loop can stop when either flag becomes set.
+    while (!(I2C1_SR1 & ((1<<1)|(1<<10))) && --g);
+    if (I2C1_SR1 & (1 << 10)) {   // Checks whether the AF flag is set. 
+        I2C1_SR1 &= ~(1<<10);     // Attempts to clear the AF flag by writing zero to it while preserving the other bits. 
+        I2C1_CR1 |= (1<<9);       // Requests a STOP condition.
+        return 0; 
+    }
+    if (!(I2C1_SR1 & (1 << 1))) { // This checks whether the ADDR flag is set. It indicates that the address phase has completed successfully.
+        I2C1_CR1 |= (1<<9); 
+        return 0; 
+    }
+    (void)I2C1_SR1; (void)I2C1_SR2; // Clear the address flag 
+    g = GUARD; 
+    // after the slave address has been handled, the master waits until the peripheral is ready to accept the actual data byte.
+    while (!(I2C1_SR1 & (1 << 7)) && --g);
+    I2C1_DR = data; // This writes the requested byte into the I2C data register.
+    g = GUARD; 
+    while (!(I2C1_SR1 & (1 << 2)) && --g); // Bit 2 is the BTF flag, meaning Byte Transfer Finished.
+    I2C1_CR1 |= (1 << 9); // Generate the STOP condition, Bit 9 is the STOP bit.
+    return 1; // Returns 1 to the calling code. reports that the I2C write succeeded.
 }
 
 /* Read one byte from the slave into *out. 1 = ok, 0 = no slave / error. */
-static int i2c_read(unsigned char addr, unsigned char *out) {
+static int i2c_read(unsigned char addr, unsigned char *out) { // *out — a pointer to a variable where the received byte will be stored.
     unsigned int g;
-    I2C1_CR1 |= (1 << 10);
-    g = GUARD; while ((I2C1_SR2 & (1 << 1)) && --g); if (!g) return 0;
-    I2C1_CR1 |= (1 << 8);
-    g = GUARD; while (!(I2C1_SR1 & (1 << 0)) && --g); if (!g) { I2C1_CR1 |= (1<<9); return 0; }
-    I2C1_DR = (addr << 1) | 1;
-    g = GUARD; while (!(I2C1_SR1 & ((1<<1)|(1<<10))) && --g);
-    if (I2C1_SR1 & (1 << 10)) { I2C1_SR1 &= ~(1<<10); I2C1_CR1 |= (1<<9); return 0; }
-    if (!(I2C1_SR1 & (1 << 1))) { I2C1_CR1 |= (1<<9); return 0; }
-    I2C1_CR1 &= ~(1 << 10);                            /* NACK the single byte */
-    (void)I2C1_SR1; (void)I2C1_SR2;
-    I2C1_CR1 |= (1 << 9);
-    g = GUARD; while (!(I2C1_SR1 & (1 << 6)) && --g);
+    I2C1_CR1 |= (1 << 10); // Enable ACK, Bit 10 is the ACK bit.
+    g = GUARD; 
+    while ((I2C1_SR2 & (1 << 1)) && --g); // Bit 1 is the BUSY flag. I2C1_SR2 & (1 << 1) checks whether the bus is busy.
     if (!g) return 0;
-    *out = (unsigned char)I2C1_DR;
+    I2C1_CR1 |= (1 << 8); // Generate START
+    g = GUARD;  
+    while (!(I2C1_SR1 & (1 << 0)) && --g);  // Wait for the START condition to be generated
+    if (!g) { I2C1_CR1 |= (1<<9); return 0; } // Bit 9 is the STOP bit. Setting it requests a STOP condition
+    I2C1_DR = (addr << 1) | 1; // Send the slave address with the read bit
+    g = GUARD; 
+    while (!(I2C1_SR1 & ((1<<1)|(1<<10))) && --g); // Wait for address acknowledgment or an error 
+    if (I2C1_SR1 & (1 << 10)) { // The if checks whether the AF flag is set.
+        I2C1_SR1 &= ~(1<<10); // The next line attempts to clear the AF flag.
+        I2C1_CR1 |= (1<<9); // The third line requests STOP.
+        return 0; // return 0; reports failure.
+    }
+    if (!(I2C1_SR1 & (1 << 1))) { I2C1_CR1 |= (1<<9); return 0; } // Check whether the address was acknowledged, if ACK then generate STOp signal 
+    I2C1_CR1 &= ~(1 << 10);                            /* NACK for the single byte */
+    (void)I2C1_SR1; (void)I2C1_SR2;
+    I2C1_CR1 |= (1 << 9); // Request STOP
+    g = GUARD; 
+    while (!(I2C1_SR1 & (1 << 6)) && --g); // Bit 6 is RxNE, meaning Receive Data Register Not Empty.
+    if (!g) return 0;
+    *out = (unsigned char)I2C1_DR; // Store the received byte
     return 1;
 }
 
@@ -116,37 +146,39 @@ int main(void)
     RCC_APB1ENR |= (1 << 21);                        /* Enable the I2C1 clock */
 
     GPIOA_MODER &= ~(3 << 10);  GPIOA_MODER |= (1 << 10);        /* First clear and then Configure PA5 as an output */
-    GPIOB_MODER  &= ~((3 << 16) | (3 << 18));                    /* PB8/9 AF4 OD PU */
-    GPIOB_MODER  |=  ((2 << 16) | (2 << 18));
-    GPIOB_OTYPER |=  (1 << 8) | (1 << 9);
-    GPIOB_PUPDR  &= ~((3 << 16) | (3 << 18));
+    GPIOB_MODER  &= ~((3 << 16) | (3 << 18));                    /* PB8/9 AF4(alternate function 4) OD PU */
+    GPIOB_MODER  |=  ((2 << 16) | (2 << 18));        // The first line clears both pins' mode bits. The second line sets each pair to binary 10.
+    GPIOB_OTYPER |=  (1 << 8) | (1 << 9);            // Configure PB8 and PB9 as open-drain
+    GPIOB_PUPDR  &= ~((3 << 16) | (3 << 18));        // Enable pull-up resistors for PB8 and PB9
     GPIOB_PUPDR  |=  ((1 << 16) | (1 << 18));
-    GPIOB_AFRH   &= ~((0xF << 0) | (0xF << 4));
+    GPIOB_AFRH   &= ~((0xF << 0) | (0xF << 4));      // Select alternate function AF4 for PB8 and PB9
     GPIOB_AFRH   |=  ((4 << 0) | (4 << 4));
-    GPIOC_PUPDR  &= ~(3 << 26);  GPIOC_PUPDR |= (1 << 26);       /* PC13 pull-up */
+    GPIOC_PUPDR  &= ~(3 << 26);  GPIOC_PUPDR |= (1 << 26); /* PC13 pull-up , PC13 uses bits 27 and 26 in GPIOC_PUPDR, because (13 times 2 = 26.*/
 
-    I2C1_CR1 |= (1 << 15);  I2C1_CR1 &= ~(1 << 15);
-    I2C1_CR2 = 16;  I2C1_CCR = 80;  I2C1_TRISE = 17;
-    I2C1_CR1 |= (1 << 0);
+    I2C1_CR1 |= (1 << 15);  I2C1_CR1 &= ~(1 << 15); // Reset the I2C1 peripheral, Bit 15 is SWRST (software reset).
+    I2C1_CR2 = 16;   // Set the I2C peripheral clock frequency
+    I2C1_CCR = 80;   // Set the I2C clock speed
+    I2C1_TRISE = 17; // Configure the maximum SCL rise time
+    I2C1_CR1 |= (1 << 0); // Enable the I2C peripheral
 
     int prev = 0, prevB = 0;
     while (1) {
         /* ---- MY button → slave blinks, then I little-blink ---- */
         int now = pressed();
-        if (now && !prev) {
+        if (now && !prev) { // This technique is called edge detection. Here, !prev means “the previous state was not pressed.” 
             delay_ms(20);
             if (pressed() && i2c_write(SLAVE_ADDR, 'S')) {
                 delay_ms(SLAVE_BLINK_WAIT);        /* let the slave finish */
                 little_blink();                    /* my ack */
             }
         }
-        prev = now;
+        prev = now; // Saves the current button state for the next loop iteration.
 
         /* ---- poll the SLAVE's button ---- */
         unsigned char r = 0;
         if (i2c_read(SLAVE_ADDR, &r)) {
-            int nowB = (r == 'B');
-            if (nowB && !prevB) {                  /* slave just pressed */
+            int nowB = (r == 'B');        // Check whether the slave reports its button as pressed, n your protocol, 'B' means that the slave's button is pressed.
+            if (nowB && !prevB) {                  /* slave just pressed as new */
                 blink(5);                          /* my LED blinks      */
                 i2c_write(SLAVE_ADDR, 'K');        /* ack → slave little-blinks */
             }

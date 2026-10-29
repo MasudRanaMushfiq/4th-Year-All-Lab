@@ -57,10 +57,10 @@ static void little_blink(void) {
 
 int main(void)
 {
-    RCC_AHB1ENR |= (1 << 0) | (1 << 1) | (1 << 2);   /* GPIOA + GPIOB + GPIOC */
-    RCC_APB1ENR |= (1 << 21);                        /* I2C1 */
+    RCC_AHB1ENR |= (1 << 0) | (1 << 1) | (1 << 2);   /* Enable GPIOA + GPIOB + GPIOC */
+    RCC_APB1ENR |= (1 << 21);                        /* Enable I2C1 periferal clock*/
 
-    GPIOA_MODER &= ~(3 << 10);  GPIOA_MODER |= (1 << 10);        /* PA5 LED */
+    GPIOA_MODER &= ~(3 << 10);  GPIOA_MODER |= (1 << 10);        /* Configures PA5 as a general-purpose output for the LED. */
     GPIOB_MODER  &= ~((3 << 16) | (3 << 18));                    /* PB8/9 AF4 OD PU */
     GPIOB_MODER  |=  ((2 << 16) | (2 << 18));
     GPIOB_OTYPER |=  (1 << 8) | (1 << 9);
@@ -73,11 +73,11 @@ int main(void)
     I2C1_CR1 |= (1 << 15);  I2C1_CR1 &= ~(1 << 15);
     I2C1_OAR1  = (MY_ADDR << 1) | (1 << 14);
     I2C1_CR2   = 16;  I2C1_CCR = 80;  I2C1_TRISE = 17;
-    I2C1_CR1  |= (1 << 10) | (1 << 0);              /* ACK + enable */
+    I2C1_CR1  |= (1 << 10) | (1 << 0);              /* Enable ACK + enable periferal*/
 
     while (1) {
-        while (!(I2C1_SR1 & (1 << 1)));            /* ADDR: addressed by master */
-        unsigned int sr2 = I2C1_SR2;              /* clears ADDR, gives direction */
+        while (!(I2C1_SR1 & (1 << 1)));            /* ADDR: wait for addressed by master */
+        unsigned int sr2 = I2C1_SR2;              /* clears ADDR, gives direction the slave read or write */
 
         if (!(sr2 & (1 << 2))) {                    /* TRA=0: master WRITING to me */
             while (!(I2C1_SR1 & (1 << 6)));         /* RXNE */

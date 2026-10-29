@@ -53,11 +53,11 @@ static void little_blink(void) {
         GPIOA_ODR &= ~(1 << 5);  delay_ms(120);
     }
 }
-static unsigned char spi_xfer(unsigned char b) {
-    while (!(SPI2_SR & (1 << 1)));
-    SPI2_DR = b;
-    while (!(SPI2_SR & (1 << 0)));
-    return (unsigned char)SPI2_DR;
+static unsigned char spi_xfer(unsigned char b) { // It sends a byte and receives a byte at the same time.
+    while (!(SPI2_SR & (1 << 1))); // Checks bit 1, TXE (Transmit Buffer Empty)
+    SPI2_DR = b;                   // Send the byte
+    while (!(SPI2_SR & (1 << 0))); // Checks bit 0, RXNE (Receive Buffer Not Empty)
+    return (unsigned char)SPI2_DR; // Return the received byte
 }
 
 int main(void)
