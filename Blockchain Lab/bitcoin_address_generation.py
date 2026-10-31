@@ -98,3 +98,5 @@ print("Full Payload    :", full.hex())
 print("Bitcoin Address :", address)
 
 validate_address(address)
+
+
