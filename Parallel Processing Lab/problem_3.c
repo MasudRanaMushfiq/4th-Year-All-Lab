@@ -56,7 +56,6 @@ int main(int argc, char *argv[])
         fflush(stdout);
 
         MPI_Send(&value, 1, MPI_INT, next, 100, MPI_COMM_WORLD);
-
         MPI_Recv(&value, 1, MPI_INT, previous, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         printf("P0 receives %d from P3\n", value);
@@ -79,3 +78,4 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
+
