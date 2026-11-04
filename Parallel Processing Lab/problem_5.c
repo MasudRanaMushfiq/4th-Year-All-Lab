@@ -21,7 +21,7 @@ C[1][0] = 3×5 + 4×7 = 43
 C[1][1] = 3×6 + 4×8 = 50
 
 run project = /usr/bin/mpicc problem_5.c -o problem_5
-then /usr/bin/mpirun -np 4 ./problem_5
+then /usr/bin/mpirun -np 2 ./problem_5
 */
 #include <stdio.h>
 #include <mpi.h>
