@@ -2,6 +2,7 @@
 Problem_2: The root process distributes different rows of a matrix to worker processes using MPI_Send.
 Workers calculate the sum of their assigned rows and return the results using MPI_Recv.
 Sample Input
+
 Number of processes: 4
 Matrix:
 1 2 3 4
@@ -71,8 +72,7 @@ int main(int argc, char *argv[])
     if (rank == 0)
     {
         /* Root gets its own row */
-        for (int j = 0; j < COLS; j++)
-        {
+        for (int j = 0; j < COLS; j++){
             row[j] = matrix[0][j];
         }
 
@@ -102,9 +102,7 @@ int main(int argc, char *argv[])
             3,
             100,
             MPI_COMM_WORLD);
-    }
-    else
-    {
+    }else{
         /*
          * Worker receives its row from P0
          */
@@ -123,16 +121,14 @@ int main(int argc, char *argv[])
      */
     row_sum = 0;
 
-    for (int j = 0; j < COLS; j++)
-    {
+    for (int j = 0; j < COLS; j++){
         row_sum += row[j];
     }
 
     /*
      * Print row and local sum
      */
-    for (int p = 0; p < size; p++)
-    {
+    for (int p = 0; p < size; p++){
         MPI_Barrier(MPI_COMM_WORLD);
 
         if (rank == p)
@@ -154,8 +150,7 @@ int main(int argc, char *argv[])
     /*
      * Workers send their sums back to root.
      */
-    if (rank == 0)
-    {
+    if (rank == 0){
         /*
          * Root adds its own row sum
          */
@@ -200,9 +195,7 @@ int main(int argc, char *argv[])
         total_sum += received_sum;
 
         printf("Total matrix sum = %d\n", total_sum);
-    }
-    else
-    {
+    }else{
         /*
          * Send local sum to root
          */
@@ -219,3 +212,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
