@@ -46,10 +46,8 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     /* Exactly 2 processes are required */
-    if (size != 2)
-    {
-        if (rank == 0)
-        {
+    if (size != 2){
+        if (rank == 0){
             printf("Error: Please run with exactly 2 processes.\n");
         }
 
@@ -58,15 +56,12 @@ int main(int argc, char *argv[])
     }
 
     /* Initialize arrays */
-    if (rank == 0)
-    {
+    if (rank == 0){
         int temp[N] = {10, 20, 30, 40, 50, 60, 70, 80};
 
         for (int i = 0; i < N; i++)
             send_array[i] = temp[i];
-    }
-    else
-    {
+    }else{
         int temp[N] = {1, 2, 3, 4, 5, 6, 7, 8};
 
         for (int i = 0; i < N; i++)
@@ -80,27 +75,18 @@ int main(int argc, char *argv[])
 
     start = MPI_Wtime();
 
-    if (rank == 0)
-    {
+    if (rank == 0){
         /* P0 sends its array to P1 */
-        MPI_Send(send_array, N, MPI_INT,
-                 1, 100, MPI_COMM_WORLD);
+        MPI_Send(send_array, N, MPI_INT, 1, 100, MPI_COMM_WORLD);
 
         /* P0 receives P1's array */
-        MPI_Recv(recv_array, N, MPI_INT,
-                 1, 200, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
-    }
-    else
-    {
+        MPI_Recv(recv_array, N, MPI_INT, 1, 200, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }else{
         /* P1 receives P0's array */
-        MPI_Recv(recv_array, N, MPI_INT,
-                 0, 100, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
+        MPI_Recv(recv_array, N, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         /* P1 sends its array to P0 */
-        MPI_Send(send_array, N, MPI_INT,
-                 0, 200, MPI_COMM_WORLD);
+        MPI_Send(send_array, N, MPI_INT, 0, 200, MPI_COMM_WORLD);
     }
 
     end = MPI_Wtime();
@@ -114,35 +100,22 @@ int main(int argc, char *argv[])
 
     start = MPI_Wtime();
 
-    if (rank == 0)
-    {
+    if (rank == 0){
         /*
          * P0 sends to P1
          * P0 receives from P1
          */
 
-        MPI_Isend(send_array, N, MPI_INT,
-                  1, 300, MPI_COMM_WORLD,
-                  &requests[0]);
-
-        MPI_Irecv(recv_array, N, MPI_INT,
-                  1, 400, MPI_COMM_WORLD,
-                  &requests[1]);
-    }
-    else
-    {
+        MPI_Isend(send_array, N, MPI_INT, 1, 300, MPI_COMM_WORLD, &requests[0]);
+        MPI_Irecv(recv_array, N, MPI_INT, 1, 400, MPI_COMM_WORLD, &requests[1]);
+    }else{
         /*
          * P1 sends to P0
          * P1 receives from P0
          */
 
-        MPI_Isend(send_array, N, MPI_INT,
-                  0, 400, MPI_COMM_WORLD,
-                  &requests[0]);
-
-        MPI_Irecv(recv_array, N, MPI_INT,
-                  0, 300, MPI_COMM_WORLD,
-                  &requests[1]);
+        MPI_Isend(send_array, N, MPI_INT, 0, 400, MPI_COMM_WORLD, &requests[0]);
+        MPI_Irecv(recv_array, N, MPI_INT, 0, 300, MPI_COMM_WORLD, &requests[1]);
     }
 
     /*
@@ -159,17 +132,14 @@ int main(int argc, char *argv[])
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (rank == 0)
-    {
+    if (rank == 0){
         printf("\nP0 received: ");
 
         for (int i = 0; i < N; i++)
             printf("%d ", recv_array[i]);
 
         printf("\n");
-    }
-    else
-    {
+    }else{
         printf("P1 received: ");
 
         for (int i = 0; i < N; i++)
@@ -187,24 +157,10 @@ int main(int argc, char *argv[])
      * Use maximum time among processes as the
      * overall communication time.
      */
-    MPI_Reduce(&blocking_time,
-               &max_blocking_time,
-               1,
-               MPI_DOUBLE,
-               MPI_MAX,
-               0,
-               MPI_COMM_WORLD);
+    MPI_Reduce(&blocking_time, &max_blocking_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&nonblocking_time, &max_nonblocking_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    MPI_Reduce(&nonblocking_time,
-               &max_nonblocking_time,
-               1,
-               MPI_DOUBLE,
-               MPI_MAX,
-               0,
-               MPI_COMM_WORLD);
-
-    if (rank == 0)
-    {
+    if (rank == 0){
         printf("\nNonblocking communication completed.\n");
 
         printf("\nPerformance Comparison:\n");
@@ -218,6 +174,7 @@ int main(int argc, char *argv[])
     }
 
     MPI_Finalize();
-
     return 0;
 }
+
+
