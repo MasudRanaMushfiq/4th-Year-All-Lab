@@ -35,8 +35,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &processes);
 
-    if (processes != 2)
-    {
+    if (processes != 2){
         if (rank == 0)
             printf("Run with exactly 2 processes.\n");
         MPI_Finalize();
@@ -63,9 +62,7 @@ int main(int argc, char **argv)
         printf("P1 sent 200\n");
     }
 
-    MPI_Sendrecv(&message, 1, MPI_INT, 1 - rank, 0,
-                 &received, 1, MPI_INT, 1 - rank, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(&message, 1, MPI_INT, 1 - rank, 0, &received, 1, MPI_INT, 1 - rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -78,3 +75,6 @@ int main(int argc, char **argv)
     MPI_Finalize();
     return 0;
 }
+
+
+
