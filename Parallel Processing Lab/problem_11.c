@@ -32,7 +32,11 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (rank == 0)
+    {
+        printf("Enter iterations, threshold, and block size: ");
+        fflush(stdout);
         scanf("%d%d%d", &config[0], &config[1], &config[2]);
+    }
 
     MPI_Bcast(config, 3, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -42,11 +46,11 @@ int main(int argc, char *argv[])
     for (int process = 0; process < size; process++)
     {
         if (rank == process)
-            printf("P%d received: Iterations = %d, Threshold = %d, Block size = %d\n",
-                   rank, config[0], config[1], config[2]);
+            printf("P%d received: Iterations = %d, Threshold = %d, Block size = %d\n", rank, config[0], config[1], config[2]);
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
     MPI_Finalize();
     return 0;
 }
+

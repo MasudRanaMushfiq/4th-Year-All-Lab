@@ -50,22 +50,19 @@ int main(int argc, char *argv[])
 
     for (int destination = 0; destination < size; destination++)
         for (int i = 0; i < message_size; i++)
-            send_data[destination * message_size + i] =
-                rank * 10 + destination * message_size + i;
+            send_data[destination * message_size + i] = rank * 10 + destination * message_size + i;
 
     MPI_Barrier(MPI_COMM_WORLD);
     start = MPI_Wtime();
+
     for (int i = 0; i < repetitions; i++)
-        MPI_Alltoall(send_data, message_size, MPI_INT,
-                     received_data, message_size, MPI_INT, MPI_COMM_WORLD);
+        MPI_Alltoall(send_data, message_size, MPI_INT, received_data, message_size, MPI_INT, MPI_COMM_WORLD);
     elapsed = MPI_Wtime() - start;
-    MPI_Reduce(&elapsed, &communication_time, 1, MPI_DOUBLE, MPI_MAX, 0,
-               MPI_COMM_WORLD);
+    MPI_Reduce(&elapsed, &communication_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     if (rank == 0)
         all_received = malloc(size * size * message_size * sizeof(int));
-    MPI_Gather(received_data, size * message_size, MPI_INT,
-               all_received, size * message_size, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(received_data, size * message_size, MPI_INT, all_received, size * message_size, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (rank == 0)
     {
@@ -80,8 +77,7 @@ int main(int argc, char *argv[])
                 printf("\n");
             }
         }
-        printf("Average communication time = %.9f seconds\n",
-               communication_time / repetitions);
+        printf("Average communication time = %.9f seconds\n", communication_time / repetitions);
     }
 
     free(send_data);
@@ -90,3 +86,6 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
+
+
+

@@ -39,12 +39,10 @@ int main(int argc, char *argv[])
 
     MPI_Scan(&local_value, &scan_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-    if (rank == 0)
+    if (rank == 0){
         manual_sum = local_value;
-    else
-    {
-        MPI_Recv(&manual_sum, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
+    }else{
+        MPI_Recv(&manual_sum, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         manual_sum += local_value;
     }
 
@@ -57,8 +55,7 @@ int main(int argc, char *argv[])
     if (rank == 0)
     {
         for (int process = 0; process < size; process++)
-            printf("P%d: Local value = %d, Prefix sum = %d\n", process,
-                   (process + 1) * 10, scan_results[process]);
+            printf("P%d: Local value = %d, Prefix sum = %d\n", process, (process + 1) * 10, scan_results[process]);
 
         printf("Prefix result:");
         for (int i = 0; i < size; i++)
@@ -72,3 +69,6 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
+
+
+

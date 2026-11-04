@@ -55,14 +55,21 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
+        printf("Enter the number of items: ");
+        fflush(stdout);
+
         if (scanf("%d", &number_of_items) != 1 || number_of_items < 0)
             number_of_items = -1;
 
-        if (number_of_items >= 0)
-        {
+        if (number_of_items >= 0){
             items = (int *)malloc((size_t)number_of_items * sizeof(int));
             if (number_of_items > 0 && items == NULL)
                 number_of_items = -1;
+        }
+
+        if (number_of_items > 0){
+            printf("Enter %d item value: ", number_of_items);
+            fflush(stdout);
         }
 
         for (int i = 0; i < number_of_items; i++)
@@ -71,8 +78,7 @@ int main(int argc, char *argv[])
 
     MPI_Bcast(&number_of_items, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (number_of_items < 0)
-    {
+    if (number_of_items < 0){
         if (rank == 0)
             printf("Invalid input or memory allocation failure.\n");
         free(items);
@@ -80,34 +86,27 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (rank == 0)
-    {
-        for (int i = 0; i < number_of_items; i++)
-        {
+    if (rank == 0){
+        for (int i = 0; i < number_of_items; i++){
             int consumer = 1 + (i % (size - 1));
             int ack;
 
             printf("P0 produced: %d\n", items[i]);
             fflush(stdout);
             MPI_Send(&items[i], 1, MPI_INT, consumer, DATA_TAG, MPI_COMM_WORLD);
-            MPI_Recv(&ack, 1, MPI_INT, consumer, ACK_TAG,
-                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&ack, 1, MPI_INT, consumer, ACK_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             printf("P%d consumed: %d\n", consumer, items[i]);
             fflush(stdout);
         }
 
         for (int consumer = 1; consumer < size; consumer++)
             MPI_Send(NULL, 0, MPI_INT, consumer, STOP_TAG, MPI_COMM_WORLD);
-    }
-    else
-    {
+    }else{
         int value;
         MPI_Status status;
 
-        while (1)
-        {
-            MPI_Recv(&value, 1, MPI_INT, 0, MPI_ANY_TAG,
-                     MPI_COMM_WORLD, &status);
+        while (1){
+            MPI_Recv(&value, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             if (status.MPI_TAG == STOP_TAG)
                 break;
 
@@ -125,3 +124,5 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
+
+

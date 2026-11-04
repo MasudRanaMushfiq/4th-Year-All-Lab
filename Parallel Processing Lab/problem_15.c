@@ -28,8 +28,7 @@ Input format:
 #include <stdio.h>
 #include <mpi.h>
 
-double function(double x)
-{
+double function(double x){
     return x * x;
 }
 
@@ -44,6 +43,8 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
+        printf("Enter lower limit, upper limit, and number of intervals: ");
+        fflush(stdout);
         scanf("%lf%lf%d", &limits[0], &limits[1], &intervals);
         parameters[0] = intervals;
     }
@@ -57,8 +58,7 @@ int main(int argc, char *argv[])
     int end = (rank + 1) * intervals / size;
     partial = 0.0;
 
-    for (int i = start; i < end; i++)
-    {
+    for (int i = start; i < end; i++){
         double x1 = limits[0] + i * width;
         double x2 = x1 + width;
         partial += (function(x1) + function(x2)) * width / 2.0;
@@ -72,9 +72,7 @@ int main(int argc, char *argv[])
         for (int process = 0; process < size; process++)
             printf("P%d partial integral = %.6f\n", process, parts[process]);
 
-        double exact = (limits[1] * limits[1] * limits[1] -
-                        limits[0] * limits[0] * limits[0]) /
-                       3.0;
+        double exact = (limits[1] * limits[1] * limits[1] - limits[0] * limits[0] * limits[0]) / 3.0;
         printf("Numerical integral ~= %.6f\n", integral);
         printf("Exact integral = %.6f\n", exact);
         printf("Absolute error ~= %.6f\n", fabs(integral - exact));
@@ -83,3 +81,5 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
+
+

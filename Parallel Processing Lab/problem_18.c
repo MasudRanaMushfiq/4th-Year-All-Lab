@@ -57,8 +57,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < 4; i++)
         local_histogram[values[i]]++;
 
-    MPI_Allreduce(local_histogram, global_histogram, 10, MPI_INT,
-                  MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(local_histogram, global_histogram, 10, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     if (rank == 0)
     {
@@ -71,3 +70,5 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
+
+

@@ -461,3 +461,50 @@ The program performs MPI scattering and boundary exchange. Although its
 comments mention computing a local result, the current source does not compute
 or print a separate local result. It was intentionally left unchanged because
 this setup only configures the Windows build and run environment.
+
+## Linux verification and run commands
+
+On a Linux laptop, check that the MPI compiler and launcher are installed:
+
+```bash
+which mpicc
+mpicc --version
+which mpirun
+mpirun --version
+```
+
+Test that MPI can start multiple processes:
+
+```bash
+mpirun -np 2 hostname
+```
+
+The hostname should be printed twice. If these commands are not found on
+Ubuntu or Debian, install MPI with:
+
+```bash
+sudo apt update
+sudo apt install build-essential openmpi-bin libopenmpi-dev
+```
+
+Compile an MPI C file from its folder:
+
+```bash
+mpicc problem_4.c -o problem_4
+```
+
+Run the compiled file with the required number of processes:
+
+```bash
+mpirun -np 2 ./problem_4
+```
+
+For a file that uses the math library, compile with `-lm`:
+
+```bash
+mpicc problem_15.c -lm -o problem_15
+mpirun -np 4 ./problem_15
+```
+
+
+
